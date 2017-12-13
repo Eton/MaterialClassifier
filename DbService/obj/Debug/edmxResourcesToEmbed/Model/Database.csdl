@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="DatabaseModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+  <EntityType Name="Category">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="MainCategory" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+    <Property Name="SubCategory" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+    <NavigationProperty Name="Category_Material" Relationship="Self.FK_Category_Material_Category" FromRole="Category" ToRole="Category_Material" />
+  </EntityType>
+  <EntityType Name="Category_Material">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="CategoryId" Type="Int32" Nullable="false" />
+    <Property Name="MaterialId" Type="Int32" Nullable="false" />
+    <NavigationProperty Name="Category" Relationship="Self.FK_Category_Material_Category" FromRole="Category_Material" ToRole="Category" />
+    <NavigationProperty Name="Material" Relationship="Self.FK_Category_Material_Material" FromRole="Category_Material" ToRole="Material" />
+  </EntityType>
+  <EntityType Name="Material">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="Url" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+    <Property Name="UsedCount" Type="Int32" Nullable="false" />
+    <NavigationProperty Name="Category_Material" Relationship="Self.FK_Category_Material_Material" FromRole="Material" ToRole="Category_Material" />
+    <NavigationProperty Name="MaterialNote" Relationship="Self.FK_MaterialNote_ToTable" FromRole="Material" ToRole="MaterialNote" />
+    <Property Name="Comment" Type="String" MaxLength="1000" FixedLength="false" Unicode="true" />
+  </EntityType>
+  <EntityType Name="MaterialNote">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="Content" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
+    <Property Name="CreatedOn" Type="DateTime" Nullable="false" Precision="3" />
+    <Property Name="MaterialId" Type="Int32" Nullable="false" />
+    <NavigationProperty Name="Material" Relationship="Self.FK_MaterialNote_ToTable" FromRole="MaterialNote" ToRole="Material" />
+  </EntityType>
+  <Association Name="FK_Category_Material_Category">
+    <End Role="Category" Type="Self.Category" Multiplicity="1">
+      <OnDelete Action="Cascade" />
+    </End>
+    <End Role="Category_Material" Type="Self.Category_Material" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Category">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Category_Material">
+        <PropertyRef Name="CategoryId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_Category_Material_Material">
+    <End Role="Material" Type="Self.Material" Multiplicity="1">
+      <OnDelete Action="Cascade" />
+    </End>
+    <End Role="Category_Material" Type="Self.Category_Material" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Material">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Category_Material">
+        <PropertyRef Name="MaterialId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_MaterialNote_ToTable">
+    <End Role="Material" Type="Self.Material" Multiplicity="1">
+      <OnDelete Action="Cascade" />
+    </End>
+    <End Role="MaterialNote" Type="Self.MaterialNote" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Material">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="MaterialNote">
+        <PropertyRef Name="MaterialId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityContainer Name="DatabaseEntities1" annotation:LazyLoadingEnabled="true">
+    <EntitySet Name="Category" EntityType="Self.Category" />
+    <EntitySet Name="Category_Material" EntityType="Self.Category_Material" />
+    <EntitySet Name="Material" EntityType="Self.Material" />
+    <EntitySet Name="MaterialNote" EntityType="Self.MaterialNote" />
+    <AssociationSet Name="FK_Category_Material_Category" Association="Self.FK_Category_Material_Category">
+      <End Role="Category" EntitySet="Category" />
+      <End Role="Category_Material" EntitySet="Category_Material" />
+    </AssociationSet>
+    <AssociationSet Name="FK_Category_Material_Material" Association="Self.FK_Category_Material_Material">
+      <End Role="Material" EntitySet="Material" />
+      <End Role="Category_Material" EntitySet="Category_Material" />
+    </AssociationSet>
+    <AssociationSet Name="FK_MaterialNote_ToTable" Association="Self.FK_MaterialNote_ToTable">
+      <End Role="Material" EntitySet="Material" />
+      <End Role="MaterialNote" EntitySet="MaterialNote" />
+    </AssociationSet>
+  </EntityContainer>
+</Schema>

@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="DatabaseModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+  <EntityType Name="Category">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="Name" Type="String" MaxLength="100" FixedLength="false" Unicode="false" Nullable="false" />
+    <NavigationProperty Name="Category_Material" Relationship="DatabaseModel.CategoryCategory_Material" FromRole="Category" ToRole="Category_Material" />
+  </EntityType>
+  <EntityContainer Name="DatabaseEntities1" annotation:LazyLoadingEnabled="true">
+    <EntitySet Name="Category" EntityType="Self.Category" />
+    <EntitySet Name="Category_Material" EntityType="DatabaseModel.Category_Material" />
+    <EntitySet Name="Material" EntityType="DatabaseModel.Material" />
+    <AssociationSet Name="CategoryCategory_Material" Association="DatabaseModel.CategoryCategory_Material">
+      <End Role="Category" EntitySet="Category" />
+      <End Role="Category_Material" EntitySet="Category_Material" />
+    </AssociationSet>
+    <AssociationSet Name="Category_MaterialMaterial" Association="DatabaseModel.Category_MaterialMaterial">
+      <End Role="Category_Material" EntitySet="Category_Material" />
+      <End Role="Material" EntitySet="Material" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="Category_Material">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="CategoryId" Type="Int32" Nullable="false" />
+    <Property Name="MaterialId" Type="Int32" Nullable="false" />
+    <NavigationProperty Name="Category" Relationship="DatabaseModel.CategoryCategory_Material" FromRole="Category_Material" ToRole="Category" />
+    <NavigationProperty Name="Material" Relationship="DatabaseModel.Category_MaterialMaterial" FromRole="Category_Material" ToRole="Material" />
+  </EntityType>
+  <EntityType Name="Material">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="Url" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+    <Property Name="UsedCount" Type="Int32" Nullable="false" />
+    <NavigationProperty Name="Category_Material" Relationship="DatabaseModel.Category_MaterialMaterial" FromRole="Material" ToRole="Category_Material" />
+  </EntityType>
+  <Association Name="CategoryCategory_Material">
+    <End Type="DatabaseModel.Category" Role="Category" Multiplicity="*" />
+    <End Type="DatabaseModel.Category_Material" Role="Category_Material" Multiplicity="*" />
+  </Association>
+  <Association Name="Category_MaterialMaterial">
+    <End Type="DatabaseModel.Category_Material" Role="Category_Material" Multiplicity="*" />
+    <End Type="DatabaseModel.Material" Role="Material" Multiplicity="*" />
+  </Association>
+</Schema>

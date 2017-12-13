@@ -1,0 +1,13 @@
+D:\MaterialCollector\DbService\obj\Debug\DbService.csprojResolveAssemblyReference.cache
+D:\MaterialCollector\DbService\obj\Debug\DbService.csproj.CoreCompileInputs.cache
+D:\MaterialCollector\DbService\bin\Debug\DbService.dll.config
+D:\MaterialCollector\DbService\bin\Debug\DbService.dll
+D:\MaterialCollector\DbService\bin\Debug\DbService.pdb
+D:\MaterialCollector\DbService\bin\Debug\EntityFramework.dll
+D:\MaterialCollector\DbService\bin\Debug\EntityFramework.SqlServer.dll
+D:\MaterialCollector\DbService\bin\Debug\EntityFramework.xml
+D:\MaterialCollector\DbService\bin\Debug\EntityFramework.SqlServer.xml
+D:\MaterialCollector\DbService\bin\Debug\zh-Hant\EntityFramework.resources.dll
+D:\MaterialCollector\DbService\obj\Debug\DbService.dll
+D:\MaterialCollector\DbService\obj\Debug\DbService.pdb
+D:\MaterialCollector\DbService\bin\Debug\zh-Hant\EntityFramework.SqlServer.resources.dll

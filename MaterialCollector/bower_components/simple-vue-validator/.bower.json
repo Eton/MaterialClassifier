@@ -1,0 +1,33 @@
+{
+  "name": "simple-vue-validator",
+  "homepage": "https://github.com/semisleep/simple-vue-validator",
+  "authors": [
+    "semisleep"
+  ],
+  "description": "lightweight yet flexible plugin for vue.js",
+  "main": "dist/plugin.js",
+  "keywords": [
+    "validation",
+    "form",
+    "vue",
+    "vue.js"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "_release": "9858c02217",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "9858c02217318c8b2a31c7b262690254cac7dea5"
+  },
+  "_source": "https://github.com/semisleep/simple-vue-validator.git",
+  "_target": "*",
+  "_originalSource": "simple-vue-validator",
+  "_direct": true
+}

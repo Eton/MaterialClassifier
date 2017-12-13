@@ -1,0 +1,431 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+<style>
+    /*
+        The container element is given a zero height and a percentage bottom padding.
+        The percentage bottom padding is a percentage of the container width,
+        so that gives it a fixed aspect ratio.
+        But in order to get the iframe to show up inside the zero-height container,
+        you need to make the container relative and the iframe absolute, positioned inside the div.
+    */
+
+    .youtubeContainer {
+        position: relative;
+        width: 100%;
+        height: 0px;
+        padding-bottom: 56.25%;
+    }
+
+    .youtubeVideo {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    @@media (min-width: 768px) {
+        #material {
+            width: 80%;
+        }
+    }
+</style>
+
+<div id="materialControl">
+    <div class="jumbotron">
+        <h2 style="font-weight: bold;">新增素材</h2>
+        <div class="form-group">
+            @*<label for="material">素材網址</label>*@
+            <input @*style="width:80%"*@ class="form-control smallfs" placeholder="請填入素材網址" v-model="materialUrl" />
+        </div>
+        <textarea v-model="materialComment" class="form-group form-control smallfs" rows="2" placeholder="為您的素材寫些備註吧..."></textarea>
+        <div class="form-group">
+            <label for="category">分類</label>
+            <select id="multiSelectedCategory" class="form-control smallfs" style="height:36px;" multiple="multiple">
+                <option class="smallfs" v-for="category in categorys" v-bind:value="category.Id">{{category.MainCategory + " - " + category.SubCategory}}</option>
+            </select>
+            <button type="button" class="btn btn-default smallfs" v-on:click="AddMaterial()">
+                <span class="glyphicon glyphicon-plus-sign iconfs"></span>
+                <span> 新增素材</span>
+            </button>
+        </div>
+    </div>
+
+    @*<div class="form-inline">
+            <div class="form-group" style="width:100%">
+                <label for="material">素材網址</label>
+                <input style="width:80%" class="form-control smallfs" placeholder="請填入素材網址" v-model="materialUrl" />
+            </div>
+        </div>
+        <div class="form-inline" style="margin-top:20px;">
+            <textarea v-model="materialComment" style="width:100%" class="form-control smallfs" rows="3" placeholder="為您的素材寫些備註吧..."></textarea>
+        </div>*@
+    <div class="form-inline updownInterval">
+        <div class="form-group">
+            <label for="category">分類</label>
+            <select v-model="selectedCategoryValue" class="form-control smallfs" style="height:36px;">
+                <option class="smallfs" v-for="category in categorys" v-bind:value="category.Id">{{category.MainCategory + " - " + category.SubCategory}}({{category.Num}})</option>
+            </select>
+        </div>
+        <button type="button" class="btn btn-default smallfs" v-on:click="OrderById()">
+            <span class="glyphicon iconfs" v-bind:class="orderbyIconClass[0]"></span>
+            <span> {{orderbyMemberText[0]}}</span>
+        </button>
+        <button type="button" class="btn btn-default smallfs" v-on:click="OrderByUsedCount()">
+            <span class="glyphicon iconfs" v-bind:class="orderbyIconClass[1]"></span>
+            <span> {{orderbyMemberText[1]}}</span>
+        </button>
+        <button type="button" class="btn btn-default smallfs" v-on:click="OrderByLastUsedTime()">
+            <span class="glyphicon iconfs" v-bind:class="orderbyIconClass[2]"></span>
+            <span> {{orderbyMemberText[2]}}</span>
+        </button>
+    </div>
+
+    <div class="row">
+        <div v-for="material in materials">
+            <youtube-frame v-bind="material"></youtube-frame>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" v-show="showLoadingBtn">
+            <button type="button" class="btn btn-default" v-on:click="LoadMoreMaterial()" style="font-size:24px;text-align:center;width:100%;margin-top:30px;">
+                <span class="glyphicon glyphicon-download-alt"></span>
+                <span> 載入更多素材</span>
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script type="text/x-template" id="youtube-frame">
+    <div v-show="exist" class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+        <div class="youtubeContainer updownInterval">
+            <iframe class="youtubeVideo" v-bind:src="Url" frameborder="0" allowfullscreen></iframe>
+        </div>
+        <div>
+            <div style="margin-top:10px;">使用次數 : {{innerUsedCount}}</div>
+            <div style="margin-top:5px;">最近一次使用的時間 : {{(innerLastUsedTime) ? innerLastUsedTime : "沒使用過"}}</div>
+            <div style="margin-top:5px;">備註 : {{Comment}}</div>
+            <button style="margin-top:5px;" type="button" class="btn btn-default tinyfs" v-on:click="toggleMaterialNote()">
+                <span class="glyphicon iconfs" v-bind:class="showMaterialNoteClass"></span>
+                <span> {{showMaterialNoteText}}</span>
+            </button>
+            <button style="margin-top:5px;" type="button" class="btn btn-default tinyfs" v-on:click="DeleteMaterial()">
+                <span class="glyphicon glyphicon-remove-circle iconfs"></span>
+                <span> 刪除素材</span>
+            </button>
+            <button v-show="showMaterialNoteRecordBtn" style="margin-top:5px;" type="button" class="btn btn-default tinyfs" v-on:click="toggleMaterialNoteRecord()">
+                <span class="glyphicon iconfs" v-bind:class="showMaterialNoteRecordClass"></span>
+                <span> {{showMaterialNoteRecordText}}</span>
+            </button>
+            <button style="margin-top:5px;" type="button" class="btn btn-default tinyfs" v-on:click="DownLoadMaterial()">
+                <span class="glyphicon glyphicon-download-alt iconfs"></span>
+                <span> 下載素材</span>
+            </button>
+        </div>
+        <div style="margin-top:5px;" v-show="showMaterialNote">
+            <textarea v-model="materialNote" class="form-control tinyfs" rows="5" placeholder="為您的素材使用過程記錄點什麼吧..."></textarea>
+            <button style="float:right;margin-top:3px;" type="button" class="btn btn-default smallfs" v-on:click="AddMaterialNote()">
+                <span class="glyphicon glyphicon-record iconfs"></span>
+                <span> 紀錄</span>
+            </button>
+        </div>
+        <div style="margin-top:5px;font-size:15px;" v-if="showMaterialNoteRecord">
+            <table class="table table-hover table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>紀錄內容</th>
+                        <th>紀錄時間</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="materialNote in materialNotes">
+                        <td>{{materialNote.Content}}</td>
+                        <td>{{materialNote.CreatedOn}}</td>
+                        <td>
+                            <button type="button" class="btn btn-default tinyfs" v-on:click="DeleteMaterialNote(materialNote.Id, Id)">
+                                <span class="glyphicon glyphicon-remove-circle iconfs"></span>
+                                <span> 刪除</span>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</script>
+
+<script>
+    Vue.component('youtube-frame', {
+        template: '#youtube-frame',
+        props: ['Id', 'Url', 'UsedCount', 'LastUsedTime', 'Comment'],
+        data: function () {
+            return {
+                showMaterialNote: false,
+                showMaterialNoteText: "使用素材",
+                showMaterialNoteClass: "glyphicon-ok-sign",
+                materialNote: "",
+                innerUsedCount: this.UsedCount,
+                innerLastUsedTime: this.LastUsedTime,
+                exist: true, // 此素材是否還存在
+                showMaterialNoteRecord: false,
+                showMaterialNoteRecordText: "素材紀錄",
+                showMaterialNoteRecordClass: "glyphicon-search",
+                materialNotes: [],
+                showMaterialNoteRecordBtn: false,
+            };
+        },
+        watch: {
+            'UsedCount': function (val, oldVal) {
+                console.log('UsedCount watch');
+                this.innerUsedCount = val;
+                this.showMaterialNoteRecordBtn = (val > 0) ? true : false;
+            },
+            'LastUsedTime': function (val, oldVal) {
+                this.innerLastUsedTime = val;
+            },
+            'Id': function (val, oldVal) {
+                this.exist = true;
+            },
+            'showMaterialNote': function (val, oldVal) {
+                if (val && this.showMaterialNoteRecord)
+                    this.toggleMaterialNoteRecord();
+            },
+            'showMaterialNoteRecord': function (val, oldVal) {
+                if (val && this.showMaterialNote)
+                    this.toggleMaterialNote();
+            },
+        },
+        methods: {
+            toggleMaterialNote: function () {
+                this.showMaterialNote = !this.showMaterialNote;
+                this.showMaterialNoteText = (this.showMaterialNoteText == "使用素材") ? "關閉紀錄" : "使用素材";
+                this.showMaterialNoteClass = (this.showMaterialNoteClass == "glyphicon-ok-sign") ? "glyphicon-remove-sign" : "glyphicon-ok-sign";
+            },
+            AddMaterialNote: function () {
+                var self = this;
+                axios.post('/Material/UseMaterial', {
+                    materialId: self.Id,
+                    noteContent: self.materialNote,
+                })
+                    .then(function (response) {
+                        alert(response.data.msg);
+                        self.innerUsedCount = response.data.data.UsedCount;
+                        self.innerLastUsedTime = response.data.data.LastUsedTime;
+                        self.materialNote = "";
+                        self.toggleMaterialNote();
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+            },
+            DeleteMaterial: function () {
+                if (!confirm("確定刪除素材嗎?"))
+                    return;
+
+                var self = this;
+                axios.post('/Material/DeleteMaterial', {
+                    materialId: self.Id
+                })
+                    .then(function (response) {
+                        alert(response.data.msg);
+                        self.exist = false;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+            },
+            DownLoadMaterial: function (url) {
+                var tourl = this.Url.replace('youtube', 'youtubeto');
+                window.open(tourl);
+            },
+            GetMaterialNotes: function () {
+                var self = this;
+                axios.post('/Material/GetMaterialNotes', {
+                    materialId: self.Id
+                })
+                    .then(function (response) {
+                        self.materialNotes = response.data.data;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+            },
+            toggleMaterialNoteRecord: function () {
+                this.showMaterialNoteRecord = !this.showMaterialNoteRecord;
+                this.showMaterialNoteRecordText = (this.showMaterialNoteRecordText == "素材紀錄") ? "關閉紀錄" : "素材紀錄";
+                this.showMaterialNoteRecordClass = (this.showMaterialNoteRecordClass == "glyphicon-search") ? "glyphicon-remove-sign" : "glyphicon-search";
+
+                if (this.showMaterialNoteRecord)
+                    this.GetMaterialNotes();
+            },
+            DeleteMaterialNote: function (materialNoteId) {
+                console.log('DeleteMaterialNote');
+
+                if (!confirm("確定刪除素材嗎?"))
+                    return;
+
+                var self = this;
+                axios.post('/Material/DeleteMaterialNote', {
+                    materialNoteId: materialNoteId
+                })
+                    .then(function (response) {
+                        self.innerUsedCount = response.data.data.UsedCount;
+                        self.innerLastUsedTime = response.data.data.LastUsedTime;
+                        self.GetMaterialNotes();
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+            }
+        }
+    })
+
+    var materialControl = new Vue({
+        el: '#materialControl',
+        data: {
+            pageNum: 0,
+            categorys: [],
+            materials: [],
+            materialUrl: "",
+            materialComment: "",           
+            selectedCategoryValue: 0,
+            orderbyMember: ['Id', 'UsedCount', 'LastUsedTime'],
+            orderby: ['desc', 'desc', 'desc'],
+            orderbyMemberText: ['建立時間近到遠', '使用次數高到低', '最近使用近到遠'],
+            orderbyIconClass: ['glyphicon-sort-by-order-alt', 'glyphicon-sort-by-attributes-alt', 'glyphicon-sort-by-order-alt'],
+            showLoadingBtn: true,
+        },
+        methods: {
+            GetCategory: function () {
+                var self = this;
+                axios.post('/Category/GetCategory')
+                    .then(function (response) {
+                        console.log(response);
+                        self.categorys = response.data.data;
+                        self.selectedCategoryValue = (self.categorys.length > 0) ? self.categorys[0].Id : 0;
+
+                        Vue.nextTick(function () {
+                            $('#multiSelectedCategory').multiselect();
+                        })
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+            },
+            AddMaterial: function () {
+                var self = this;
+
+                var patt = /^https:\/\/(?:www\.)?youtube.com\/watch\?(?=.*v=\w+)(?:\S+)?$/i;
+                if (!self.materialUrl || !self.materialUrl.match(patt)) {
+                    alert("請輸入正確的 Youtube 網址");
+                    return;
+                }
+
+                axios.post('/Material/AddMaterial', {
+                    content: self.materialUrl,
+                    comment: self.materialComment,
+                    categoryId: $('#multiSelectedCategory').val()
+                })
+                    .then(function (response) {
+                        alert(response.data.msg);
+                        self.GetMaterials(true);
+                        self.materialUrl = "";
+                        self.materialComment = "";
+                        self.GetCategory();
+                    })
+                    .catch(function (error) {
+                        alert(error);
+                    })
+            },
+            GetMaterials: function (reNew) {
+                var self = this;
+
+                if (reNew) {
+                    self.materials = [];
+                    self.pageNum = 0;
+                }
+
+                var categoryId = (self.selectedCategoryValue !== 0) ? self.selectedCategoryValue : null;
+                axios.post('/Material/GetMaterial', {
+                    categoryId: categoryId,
+                    orderbyMember: self.orderbyMember,
+                    orderby: self.orderby,
+                    page: self.pageNum,
+                    count: 10
+                })
+                    .then(function (response) {
+                        console.log(response);
+
+                        if (response.data.data) {
+                            self.showLoadingBtn = (response.data.data.length <= 10) ? false : true;
+                            self.materials = _.concat(self.materials, response.data.data);
+                            self.pageNum++;
+                        }
+                    })
+                    .catch(function (error) {
+                        alert(error);
+                    })
+            },
+            OrderById: function () {
+                this.orderbyMemberText[0] = (this.orderbyMemberText[0] === "建立時間近到遠") ? "建立時間遠到近" : "建立時間近到遠";
+                this.orderbyIconClass[0] = (this.orderbyIconClass[0] === "glyphicon-sort-by-order-alt") ? "glyphicon-sort-by-order" : "glyphicon-sort-by-order-alt";
+                this.OrderBy("Id");
+            },
+            OrderByUsedCount: function () {
+                this.orderbyMemberText[1] = (this.orderbyMemberText[1] === "使用次數高到低") ? "使用次數低到高" : "使用次數高到低";
+                this.orderbyIconClass[1] = (this.orderbyIconClass[1] === "glyphicon-sort-by-attributes-alt") ? "glyphicon-sort-by-attributes" : "glyphicon-sort-by-attributes-alt";
+                this.OrderBy("UsedCount");
+            },
+            OrderByLastUsedTime: function () {
+                this.orderbyMemberText[2] = (this.orderbyMemberText[2] === "最近使用近到遠") ? "最近使用遠到近" : "最近使用近到遠";
+                this.orderbyIconClass[2] = (this.orderbyIconClass[2] === "glyphicon-sort-by-order-alt") ? "glyphicon-sort-by-order" : "glyphicon-sort-by-order-alt";
+                this.OrderBy("LastUsedTime");
+            },
+            OrderBy: function (member) {
+                if (member) {
+                    // move order member to position 0
+                    var memberIndex = _.indexOf(this.orderbyMember, member);
+                    if (memberIndex !== 0) {
+                        var tmp = this.orderbyMember[0];
+                        this.orderbyMember[0] = this.orderbyMember[memberIndex];
+                        this.orderbyMember[memberIndex] = tmp;
+
+                        tmp = this.orderby[0];
+                        this.orderby[0] = this.orderby[memberIndex];
+                        this.orderby[memberIndex] = tmp;
+                    }
+
+                    this.orderby[0] = (this.orderby[0] === "desc") ? "asc" : "desc";
+                }
+
+                this.GetMaterials(true);
+            },
+            LoadMoreMaterial: function () {
+                this.GetMaterials(false);
+            }
+        },
+        watch: {
+            selectedCategoryValue: function (val) {
+                this.GetMaterials(true);
+            },
+        },
+        created: function () {
+            console.log(this + ' created');
+
+        },
+        mounted: function () {
+            this.GetCategory();
+        },
+    });
+</script>
+
+@*@section scripts{
+        <script>
+            $(document).ready(function () {
+                $('#multiSelectedCategory').multiselect();
+            });
+        </script>
+    }*@

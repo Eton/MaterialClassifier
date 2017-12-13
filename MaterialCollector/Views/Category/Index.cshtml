@@ -1,0 +1,207 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+<div id="categoryControl">
+    <div class="jumbotron">
+        <div>分類以<span style="color:red;font-size:24px;">主要類別 + 次要類別</span>作為分類，EX :</div>
+        <ul>
+            <li>婚禮(主要類別) + 迎娶、宴客、致詞(次要類別)</li>
+            <li>商業(主要類別) + 悲、歡、離、合(次要類別)</li>
+        </ul>
+    </div>
+    <div class="form-inline">
+        <div class="form-group">
+            <label for="mainCategory">主要類別</label>
+            <input type="text" class="form-control smallfs" v-model="mainCategory">
+        </div>
+        <div class="form-group">
+            <label for="subCategory">次要類別</label>
+            <input type="text" class="form-control smallfs" v-model="subCategory">
+        </div>
+        <button type="button" class="btn btn-default smallfs" v-on:click="AddCategory()">新增分類</button>
+    </div>
+    <table style="margin-top:30px;" class="table table-hover table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>
+                    <span>分類</span>
+                    <select v-model="selectedMainCategory" class="form-control smallfs" style="height:36px;width:auto;display:inline-block">
+                        <option class="smallfs" v-for="main in mainCategorys" v-bind:value="main">{{main}}</option>
+                    </select>
+                </th>
+                <th>素材數量</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr is="categorytmp" v-for="category in categorys" v-bind="category"></tr>
+        </tbody>
+    </table>
+</div>
+
+<script type="text/x-template" id="categorytmp">
+    <tr v-show="show">
+        <td v-show="!isEdit">{{innerMainCategory + " - " + innderSubCategory}}</td>
+        <td v-show="isEdit">
+            <input class="form-control smallfs" v-model="editMainCategory" size="8" style="width:auto;display:inline-block" /> - <input class="form-control smallfs" v-model="editSubCategory" size="8" style="width:auto;display:inline-block" />
+        </td>
+        <td>{{Num}}</td>
+        <td>
+            <button v-show="!isEdit" type="button" class="btn btn-danger smallfs" v-on:click="DeleteCategory()">
+                <span class="glyphicon glyphicon-remove-circle iconfs"></span>
+                <span> 刪除類別</span>
+            </button>
+            <button v-show="!isEdit" type="button" class="btn btn-warning smallfs" v-on:click="ToggleEdit()">
+                <span class="glyphicon glyphicon-remove-circle iconfs"></span>
+                <span> 修改類別</span>
+            </button>
+            <button v-show="isEdit" type="button" class="btn btn-success smallfs" v-on:click="UpdateCategory()">
+                <span class="glyphicon glyphicon-remove-circle iconfs"></span>
+                <span> 確定修改</span>
+            </button>
+            <button v-show="isEdit" type="button" class="btn btn-default smallfs" v-on:click="ToggleEdit()">
+                <span class="glyphicon glyphicon-remove-circle iconfs"></span>
+                <span> 取消修改</span>
+            </button>
+        </td>
+    </tr>
+</script>
+
+<script>
+    Vue.component('categorytmp', {
+        template: '#categorytmp',
+        props: ['Id', 'MainCategory', 'SubCategory', 'Num'],
+        data: function () {
+            return {
+                show: true,
+                isEdit: false,
+                innerMainCategory: this.MainCategory,
+                innderSubCategory: this.SubCategory,
+                editMainCategory: this.MainCategory,
+                editSubCategory: this.SubCategory,
+            }
+        },
+        watch: {
+            'MainCategory': function (val) {
+                this.innerMainCategory = val;
+                this.editMainCategory = val;
+            },
+            'SubCategory': function (val) {
+                this.innderSubCategory = val;
+                this.editSubCategory = val;
+            },
+        },
+        methods: {
+            DeleteCategory: function () {
+                if (!confirm("確定刪除分類嗎?"))
+                    return;
+
+                var self = this;
+                axios.post('/Category/DeleteCategory', {
+                    categoryId: self.Id,
+                })
+                    .then(function (response) {
+                        console.log(response);
+                        self.show = false;
+                        alert(response.data.msg);
+                    })
+                    .catch(function (error) {
+                        alert(error);
+                    })
+            },
+            ToggleEdit: function () {
+                this.isEdit = !this.isEdit;
+            },
+            UpdateCategory: function () {
+                var self = this;
+                axios.post('/Category/UpdateCategory', {
+                    categoryId: self.Id,
+                    mainCategory: self.editMainCategory,
+                    subCategory: self.editSubCategory,
+                })
+                    .then(function (response) {
+                        console.log(response);
+                        if (response.data.data) {
+                            self.innerMainCategory = response.data.data.MainCategory;
+                            self.editMainCategory = response.data.data.MainCategory;
+                            self.innderSubCategory = response.data.data.SubCategory;
+                            self.editSubCategory = response.data.data.SubCategory;
+                            self.ToggleEdit();
+                        }
+                        alert(response.data.msg);
+                    })
+                    .catch(function (error) {
+                        alert(error);
+                    })
+            },
+        }
+    });
+
+    var categoryControl = new Vue({
+        el: '#categoryControl',
+        data: {
+            categorys: [],
+            mainCategorys: ['全部'], // 所有主類別
+            mainCategory: '',
+            subCategory: '',
+            selectedMainCategory:'全部',
+        },
+        methods: {
+            GetCategory: function () {
+                var self = this;
+                var main = (self.selectedMainCategory === "全部") ? "" : self.selectedMainCategory;
+                axios.post('/Category/GetCategory', {
+                    mainCategory: main,
+                })
+                    .then(function (response) {
+                        console.log(response);
+                        self.categorys = response.data.data;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+            },
+            GetALLMainCategory: function () {
+                var self = this;
+                axios.post('/Category/GetALLMainCategory')
+                    .then(function (response) {
+                        console.log(response.data.data);
+                        self.mainCategorys = _.concat(self.mainCategorys, response.data.data);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+            },
+            AddCategory: function () {
+                var self = this;
+                axios.post('/Category/AddCategory', {
+                    mainCategory: self.mainCategory,
+                    subCategory: self.subCategory
+                })
+                    .then(function (response) {
+                        console.log(response);
+                        self.GetCategory();
+                        alert(response.data.msg);
+                    })
+                    .catch(function (error) {
+                        alert(error);
+                    })
+            },
+        },
+        watch: {
+            selectedMainCategory: function (val) {
+                this.GetCategory();
+            },
+        },
+        created: function () {
+            console.log(this + ' created');
+            this.GetCategory();
+            this.GetALLMainCategory();
+        },
+        mounted: function () {
+            console.log(this + ' mounted');
+        }
+    });
+</script>
